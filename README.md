@@ -2,9 +2,6 @@
 This service has the feature to
 1. Create Course
 2. Get All Course
-3. Validate JWT Token
-4. Update (only can access with Header Authorization JWT token)
-5. Get Profile (only can access with Header Authorization JWT token)
 
 ## Setup and Installation
 1. clone this repository

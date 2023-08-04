@@ -11,12 +11,12 @@ import (
 )
 
 type Course struct {
-	Id         uuid.UUID   `db:"id"`
-	UserId     uuid.UUID   `db:"user_id"`
-	Title      string      `db:"title"`
-	Content    string      `db:"content"`
-	Created_at time.Time   `db:"created_at"`
-	Updated_at time.Time   `db:"updated_at"`
+	Id         uuid.UUID   `db:"id" validate:"true"`
+	UserId     uuid.UUID   `db:"user_id" validate:"true"`
+	Title      string      `db:"title" validate:"true"`
+	Content    string      `db:"content" validate:"true"`
+	Created_at time.Time   `db:"created_at" validate:"true"`
+	Updated_at time.Time   `db:"updated_at" validate:"true"`
 	Deleted_at null.Time   `db:"deleted_at"`
 	Created_by uuid.UUID   `db:"created_by"`
 	Updated_by uuid.UUID   `db:"updated_by"`
@@ -24,8 +24,8 @@ type Course struct {
 }
 
 type CoursePayload struct {
-	Title   string `json:"title"`
-	Content string `json:"content"`
+	Title   string `json:"title" validate:"true"`
+	Content string `json:"content" validate:"true"`
 }
 
 type CourseResponseFormat struct {

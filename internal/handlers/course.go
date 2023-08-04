@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/evermos/boilerplate-go/internal/domain/course"
+	"github.com/evermos/boilerplate-go/shared"
 	"github.com/evermos/boilerplate-go/shared/failure"
 	"github.com/evermos/boilerplate-go/shared/jwt"
 	"github.com/evermos/boilerplate-go/shared/pagination"
@@ -73,6 +74,11 @@ func (h *CourseHandler) HandleCreate(w http.ResponseWriter, r *http.Request) {
 	decoder := json.NewDecoder(r.Body)
 	var payload course.CoursePayload
 	err := decoder.Decode(&payload)
+	err = shared.GetValidator().Struct(payload)
+	if err != nil {
+		response.WithError(w, failure.BadRequest(err))
+		return
+	}
 	claims, ok := r.Context().Value(middleware.ClaimsKey("claims")).(jwt.Claims)
 	if !ok {
 		response.WithMessage(w, http.StatusUnauthorized, "Unauthorized")

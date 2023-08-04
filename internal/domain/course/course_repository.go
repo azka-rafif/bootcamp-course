@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/evermos/boilerplate-go/infras"
-	"github.com/evermos/boilerplate-go/shared/failure"
 	"github.com/evermos/boilerplate-go/shared/logger"
 	"github.com/gofrs/uuid"
 	"github.com/jmoiron/sqlx"
@@ -58,13 +57,11 @@ func (r *CourseRepositoryMySQL) GetAll(limit, offset int, sort, field, title str
 
 	if title != "" {
 		query += `AND title LIKE `
-		query += fmt.Sprintf("'%%%s%%'", title)
+		query += fmt.Sprintf("'%%%s%%' COLLATE utf8_general_ci", title)
 	}
 	query += fmt.Sprintf(" ORDER BY %s %s LIMIT %d OFFSET %d", field, sort, limit, offset)
-	println(query)
 	err = r.DB.Read.Select(&res, query)
 	if err != nil {
-		err = failure.InternalError(err)
 		logger.ErrorWithStack(err)
 	}
 	return

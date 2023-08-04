@@ -6,12 +6,15 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/evermos/boilerplate-go/configs"
 	"github.com/evermos/boilerplate-go/shared/failure"
 	"github.com/evermos/boilerplate-go/shared/jwt"
 	"github.com/evermos/boilerplate-go/transport/http/response"
 )
 
-type JwtAuthentication struct{}
+type JwtAuthentication struct {
+	config *configs.Config
+}
 
 type ClaimsKey string
 
@@ -23,8 +26,12 @@ type ResponseJWT struct {
 	Data jwt.Claims `json:"data"`
 }
 
-func ProvideJwtAuthentication() *JwtAuthentication {
-	return &JwtAuthentication{}
+type CustomError struct {
+	Error string `json:"error"`
+}
+
+func ProvideJwtAuthentication(conf *configs.Config) *JwtAuthentication {
+	return &JwtAuthentication{config: conf}
 }
 
 func (a *JwtAuthentication) CheckJwt(next http.Handler) http.Handler {
@@ -34,7 +41,7 @@ func (a *JwtAuthentication) CheckJwt(next http.Handler) http.Handler {
 			response.WithMessage(w, http.StatusUnauthorized, "Unauthorized")
 			return
 		}
-		req, err := http.NewRequest("GET", "http://127.0.0.1:8080/v1/auth/validate", nil)
+		req, err := http.NewRequest("GET", a.config.App.AuthBaseURL+"/validate", nil)
 		if err != nil {
 			response.WithError(w, err)
 			return
@@ -46,16 +53,22 @@ func (a *JwtAuthentication) CheckJwt(next http.Handler) http.Handler {
 			response.WithError(w, err)
 			return
 		}
-
-		if resp.StatusCode != 200 {
-			response.WithMessage(w, http.StatusBadRequest, "Invalid Jwt Token")
+		if resp.StatusCode == 401 {
+			decoder := json.NewDecoder(resp.Body)
+			var payload CustomError
+			err = decoder.Decode(&payload)
+			if err != nil {
+				response.WithError(w, err)
+				return
+			}
+			response.WithError(w, failure.Unauthorized(strings.Split(payload.Error, ": ")[1]))
 			return
 		}
 		decoder := json.NewDecoder(resp.Body)
 		var payload ResponseJWT
 		err = decoder.Decode(&payload)
 		if err != nil {
-			response.WithError(w, failure.BadRequest(err))
+			response.WithError(w, err)
 			return
 		}
 		ctx := context.WithValue(r.Context(), ClaimsKey("claims"), payload.Data)
@@ -70,8 +83,8 @@ func (a *JwtAuthentication) CheckRole(next http.Handler) http.Handler {
 			response.WithMessage(w, http.StatusUnauthorized, "Unauthorized")
 			return
 		}
-		if strings.EqualFold(claims.Role, "student") {
-			response.WithError(w, failure.Unauthorized("students are not authorized"))
+		if !strings.EqualFold(claims.Role, "teacher") {
+			response.WithError(w, failure.Unauthorized("those who are not teachers, are unauthorized"))
 			return
 		}
 		next.ServeHTTP(w, r)

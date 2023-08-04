@@ -27,7 +27,7 @@ func WithMessage(w http.ResponseWriter, code int, message string) {
 
 // WithJSON sends a response containing a JSON object
 func WithJSON(w http.ResponseWriter, code int, jsonPayload interface{}) {
-	respond(w, code, Base{Data: &jsonPayload})
+	respond(w, code, &jsonPayload)
 }
 
 // WithError sends a response with an error message

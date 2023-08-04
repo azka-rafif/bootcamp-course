@@ -1,13 +1,18 @@
 package course
 
 import (
+	"fmt"
+
 	"github.com/evermos/boilerplate-go/infras"
+	"github.com/evermos/boilerplate-go/shared/failure"
 	"github.com/evermos/boilerplate-go/shared/logger"
+	"github.com/gofrs/uuid"
 	"github.com/jmoiron/sqlx"
 )
 
 type CourseRepository interface {
 	Create(payload Course) (err error)
+	GetAll(limit, offset int, sort, field, title string, userId uuid.UUID) (res []Course, err error)
 }
 
 type CourseRepositoryMySQL struct {
@@ -43,6 +48,24 @@ func (r *CourseRepositoryMySQL) txCreate(tx *sqlx.Tx, payload Course) (err error
 	if err != nil {
 		logger.ErrorWithStack(err)
 		return
+	}
+	return
+}
+
+func (r *CourseRepositoryMySQL) GetAll(limit, offset int, sort, field, title string, userId uuid.UUID) (res []Course, err error) {
+	query := `SELECT * FROM course WHERE `
+	query += fmt.Sprintf(" user_id = '%s' ", userId.String())
+
+	if title != "" {
+		query += `AND title LIKE `
+		query += fmt.Sprintf("'%%%s%%'", title)
+	}
+	query += fmt.Sprintf(" ORDER BY %s %s LIMIT %d OFFSET %d", field, sort, limit, offset)
+	println(query)
+	err = r.DB.Read.Select(&res, query)
+	if err != nil {
+		err = failure.InternalError(err)
+		logger.ErrorWithStack(err)
 	}
 	return
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"strings"
 
 	"github.com/evermos/boilerplate-go/shared/failure"
 	"github.com/evermos/boilerplate-go/shared/jwt"
@@ -60,5 +61,20 @@ func (a *JwtAuthentication) CheckJwt(next http.Handler) http.Handler {
 		}
 		ctx := context.WithValue(r.Context(), ClaimsKey("claims"), payload.Data)
 		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
+func (a *JwtAuthentication) CheckRole(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		claims, ok := r.Context().Value(ClaimsKey("claims")).(jwt.Claims)
+		if !ok {
+			response.WithMessage(w, http.StatusUnauthorized, "Unauthorized")
+			return
+		}
+		if strings.EqualFold(claims.Role, "student") {
+			response.WithError(w, failure.Unauthorized("students are not authorized"))
+			return
+		}
+		next.ServeHTTP(w, r)
 	})
 }

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"time"
 
+	"github.com/evermos/boilerplate-go/shared"
 	"github.com/evermos/boilerplate-go/shared/nuuid"
 	"github.com/gofrs/uuid"
 	"github.com/guregu/null"
@@ -41,7 +42,10 @@ type CourseResponseFormat struct {
 }
 
 func (c *Course) NewFromPayload(load CoursePayload, userId uuid.UUID) (Course, error) {
-	courseId, _ := uuid.NewV4()
+	courseId, err := uuid.NewV4()
+	if err != nil {
+		return Course{}, err
+	}
 	newCours := Course{
 		Id:         courseId,
 		UserId:     userId,
@@ -52,7 +56,8 @@ func (c *Course) NewFromPayload(load CoursePayload, userId uuid.UUID) (Course, e
 		Updated_at: time.Now().UTC(),
 		Updated_by: userId,
 	}
-	return newCours, nil
+	err = newCours.Validate()
+	return newCours, err
 }
 
 func (c Course) ToResponseFormat() CourseResponseFormat {
@@ -62,4 +67,9 @@ func (c Course) ToResponseFormat() CourseResponseFormat {
 
 func (c Course) MarshalJSON() ([]byte, error) {
 	return json.Marshal(c.ToResponseFormat())
+}
+
+func (c *Course) Validate() (err error) {
+	validator := shared.GetValidator()
+	return validator.Struct(c)
 }

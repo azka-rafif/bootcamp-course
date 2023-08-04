@@ -11,8 +11,7 @@ import (
 	"github.com/evermos/boilerplate-go/transport/http/response"
 )
 
-type JwtAuthentication struct {
-}
+type JwtAuthentication struct{}
 
 type ClaimsKey string
 

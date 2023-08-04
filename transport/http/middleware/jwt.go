@@ -58,8 +58,7 @@ func (a *JwtAuthentication) CheckJwt(next http.Handler) http.Handler {
 			response.WithError(w, failure.BadRequest(err))
 			return
 		}
-		ctx := context.WithValue(r.Context(), ClaimsKey("claims"), payload)
-
+		ctx := context.WithValue(r.Context(), ClaimsKey("claims"), payload.Data)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
